@@ -3,87 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>作詞連想ツール v7.5</title>
+    <title>作詞連想ツール v8.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-        input, button { -webkit-appearance: none; border-radius: 8px; }
-        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: none; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
-<body class="p-4">
+<body class="p-4 bg-gray-50 text-gray-900">
 
-    <!-- 【重要】ここにAPIキーを入力してください -->
     <script>
-        const apiKey = "AIzaSyDAa8VyiyQuYvP6m1I7enPP1NpbU__7EA0"; // ←ここに ghp_ ではなく、Google AI Studioで取得した APIキーを貼り付けます
+        // 【重要】ここに Google AI Studio で取得した API キーを貼り付けてください
+        const apiKey = "AIzaSyDAa8VyiyQuYvP6m1I7enPP1NpbU__7EA0"; 
     </script>
 
     <div class="max-w-md mx-auto space-y-4">
         <!-- ヘッダー -->
-        <div class="card p-6 text-center">
-            <h1 class="text-2xl font-bold text-gray-800">作詞連想ツール v7.5</h1>
-            <p class="text-sm text-gray-500 mt-1">iPhone & AI 対応版</p>
+        <div class="bg-white p-6 rounded-2xl shadow-sm text-center">
+            <h1 class="text-2xl font-bold text-gray-800">作詞連想ツール v8.5</h1>
+            <p class="text-xs text-gray-400 mt-1">AI 接続診断モード</p>
         </div>
 
         <!-- 入力エリア -->
-        <div class="card p-6 space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4 border border-gray-100">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">表示名（漢字など）</label>
-                <input type="text" id="displayInput" class="w-full p-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="例：蒼い空">
+                <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">言葉を入力</label>
+                <input type="text" id="displayInput" class="w-full p-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-400 outline-none transition-all" placeholder="例：蒼い空">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">読み（ひらがな）</label>
-                <input type="text" id="yomiInput" class="w-full p-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="例：あおいそら">
-            </div>
+            
             <div class="flex space-x-2">
-                <button onclick="saveWord()" class="flex-1 bg-blue-600 text-white py-3 font-bold hover:bg-blue-700 active:scale-95 transition-all">端末に貯金する</button>
-                <button onclick="askAI()" class="bg-purple-600 text-white px-4 py-3 font-bold hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center">
-                    <span id="aiButtonText">AI</span>
-                    <div id="spinner" class="loading-spinner"></div>
+                <button onclick="saveWord()" class="flex-1 bg-blue-500 text-white py-4 font-bold rounded-xl active:scale-95 transition-all shadow-md shadow-blue-100">貯金する</button>
+                <button onclick="askAI()" class="bg-purple-600 text-white px-8 py-4 font-bold rounded-xl active:scale-95 transition-all flex items-center justify-center shadow-md shadow-purple-100">
+                    <span id="aiButtonText">AI提案</span>
+                    <div id="spinner" class="hidden animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div>
                 </button>
             </div>
         </div>
 
-        <!-- タブ切り替え -->
-        <div class="flex border-b border-gray-200">
-            <button onclick="switchTab('list')" id="tab-list" class="flex-1 py-3 font-bold active-tab">貯金箱</button>
-            <button onclick="switchTab('ai')" id="tab-ai" class="flex-1 py-3 font-bold text-gray-500">AIの提案</button>
+        <!-- AI 回答・診断エリア -->
+        <div class="bg-purple-50 p-5 rounded-2xl border border-purple-100 min-h-[120px] transition-all">
+            <h2 class="text-xs font-bold text-purple-400 mb-2 uppercase tracking-widest">AI Response / Diagnosis</h2>
+            <p id="aiResponse" class="text-gray-700 text-sm whitespace-pre-wrap font-medium leading-relaxed">AIボタンを押すと、ここに結果またはエラーの詳細が表示されます。</p>
         </div>
-
-        <!-- 貯金箱リスト -->
+        
+        <!-- リスト表示エリア -->
         <div id="listSection" class="space-y-2"></div>
-
-        <!-- AI提案エリア -->
-        <div id="aiSection" class="hidden space-y-2">
-            <div class="card p-4 bg-purple-50 border border-purple-100">
-                <p id="aiResponse" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">AIの提案がここに表示されます...</p>
-            </div>
-        </div>
     </div>
 
     <script>
         let words = JSON.parse(localStorage.getItem('sakushi_words') || '[]');
-        let currentTab = 'list';
-
-        // 表示名を入力すると読みも自動で入る（簡易連動）
-        document.getElementById('displayInput').addEventListener('input', (e) => {
-            document.getElementById('yomiInput').value = e.target.value;
-        });
 
         function saveWord() {
-            const display = document.getElementById('displayInput').value.trim();
-            const yomi = document.getElementById('yomiInput').value.trim();
-            if (!display) return;
-
-            words.unshift({ display, yomi, date: new Date().toLocaleString() });
+            const val = document.getElementById('displayInput').value.trim();
+            if (!val) return;
+            words.unshift({ display: val, yomi: val, date: new Date().getTime() });
             localStorage.setItem('sakushi_words', JSON.stringify(words));
-            
             document.getElementById('displayInput').value = '';
-            document.getElementById('yomiInput').value = '';
             renderList();
+        }
+
+        function renderList() {
+            document.getElementById('listSection').innerHTML = words.map((w, i) => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-50 flex justify-between items-center animate-in fade-in slide-in-from-bottom-2">
+                    <div class="font-bold text-gray-700 text-lg">${w.display}</div>
+                    <button onclick="deleteWord(${i})" class="text-red-200 hover:text-red-400 p-2 transition-colors text-xl">✕</button>
+                </div>
+            `).join('');
         }
 
         function deleteWord(index) {
@@ -92,73 +73,64 @@
             renderList();
         }
 
-        function renderList() {
-            const container = document.getElementById('listSection');
-            container.innerHTML = words.map((w, i) => `
-                <div class="card p-4 flex justify-between items-center animate-in fade-in duration-300">
-                    <div>
-                        <div class="text-xs text-blue-500 font-bold">${w.yomi}</div>
-                        <div class="text-lg font-bold text-gray-800">${w.display}</div>
-                    </div>
-                    <button onclick="deleteWord(${i})" class="text-red-400 p-2">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('listSection').classList.toggle('hidden', tab !== 'list');
-            document.getElementById('aiSection').classList.toggle('hidden', tab !== 'ai');
-            document.getElementById('tab-list').className = tab === 'list' ? 'flex-1 py-3 font-bold active-tab' : 'flex-1 py-3 font-bold text-gray-500';
-            document.getElementById('tab-ai').className = tab === 'ai' ? 'flex-1 py-3 font-bold active-tab' : 'flex-1 py-3 font-bold text-gray-500';
-        }
-
-        // --- AI接続セクション ---
         async function askAI() {
-            const display = document.getElementById('displayInput').value.trim();
-            if (!display) {
-                alert("言葉を入力してからAIボタンを押してください。");
+            const val = document.getElementById('displayInput').value.trim();
+            if (!val) {
+                alert("言葉を入力してください");
                 return;
             }
-            if (!apiKey) {
-                alert("APIキーが設定されていません。index.htmlを編集してください。");
+            if (!apiKey || apiKey === "") {
+                alert("APIキーが設定されていません。index.htmlの13行目を確認してください。");
                 return;
             }
 
-            const buttonText = document.getElementById('aiButtonText');
+            const resArea = document.getElementById('aiResponse');
+            const btnText = document.getElementById('aiButtonText');
             const spinner = document.getElementById('spinner');
-            const responseArea = document.getElementById('aiResponse');
 
-            buttonText.style.display = 'none';
-            spinner.style.display = 'block';
-            switchTab('ai');
-            responseArea.innerText = "AIが連想中...";
-
-            const prompt = `あなたはプロの作詞家です。「${display}」という言葉から連想される、エモーショナルで印象的な歌詞のフレーズを5つ提案してください。韻を踏んだり、情景が浮かぶような表現を重視してください。`;
+            btnText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            resArea.innerText = "Google AI Studio に接続中...";
+            resArea.classList.remove('text-red-500');
 
             try {
-                // ★★★ ここが接続先（URL）です。最新の gemini-1.5-flash を指定しています ★★★
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
+                        contents: [{
+                            parts: [{ text: `あなたはプロの作詞家です。「${val}」という言葉から連想される、エモーショナルな歌詞フレーズを5つ提案してください。` }]
+                        }]
                     })
                 });
 
                 const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text;
-                responseArea.innerText = aiText;
-            } catch (error) {
-                console.error(error);
-                responseArea.innerText = "エラー：接続に失敗しました。APIキーまたはネットワークを確認してください。";
+
+                if (data.error) {
+                    resArea.classList.add('text-red-500');
+                    resArea.innerText = "【Google API エラー診断】\n\n" + 
+                                      "Code: " + data.error.code + "\n" +
+                                      "Status: " + data.error.status + "\n" +
+                                      "Message: " + data.error.message;
+                } 
+                else if (data.candidates && data.candidates[0].content) {
+                    resArea.innerText = data.candidates[0].content.parts[0].text;
+                } 
+                else {
+                    resArea.innerText = "AIからの返答が解析できませんでした。\n" + JSON.stringify(data);
+                }
+
+            } catch (e) {
+                resArea.classList.add('text-red-500');
+                resArea.innerText = "【ネットワーク接続エラー】\n" + e.message;
             } finally {
-                buttonText.style.display = 'block';
-                spinner.style.display = 'none';
+                btnText.classList.remove('hidden');
+                spinner.classList.add('hidden');
             }
         }
 
-        // 初期表示
         renderList();
     </script>
 </body>
