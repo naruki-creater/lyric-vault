@@ -10,7 +10,7 @@
 
     <script>
         // 【重要】ここに Google AI Studio で取得した API キーを貼り付けてください
-        const apiKey = "AIzaSyA3ak3CA3rWtzskyAFzDqQCSthU2y6RDjY"; 
+        const apiKey = "AIzaSyAAlDXdC5A-rx0mMsI_EXdhLDVAXqvCsK0"; 
     </script>
 
     <div class="max-w-md mx-auto space-y-4">
@@ -94,7 +94,7 @@
             resArea.classList.remove('text-red-500');
 
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
