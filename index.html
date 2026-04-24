@@ -2,136 +2,352 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>作詞連想ツール v8.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhyme Studio | ナルキ式・作詞連想ツール</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --accent-green: #00d1b2;
+            --accent-orange: #e17055;
+            --text-main: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+
+        .accent-border { border-color: var(--accent-green); }
+        .accent-text { color: var(--accent-green); }
+        .bg-accent-green { background-color: var(--accent-green); }
+        .bg-accent-orange { background-color: var(--accent-orange); }
+
+        /* スティッキーヘッダーの影 */
+        .sticky-search {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0, 209, 178, 0.3);
+        }
+
+        /* アニメーション */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        input:focus { outline: none; box-shadow: 0 0 0 2px rgba(0, 209, 178, 0.5); }
+    </style>
 </head>
-<body class="p-4 bg-gray-50 text-gray-900">
+<body class="min-h-screen pb-20">
 
-    <script>
-        // 【重要】ここに Google AI Studio で取得した API キーを貼り付けてください
-        const apiKey = "AIzaSyAdVcjdm8wy2PASetFTpstwx1b0jEuIRUM"; 
-    </script>
-
-    <div class="max-w-md mx-auto space-y-4">
-        <!-- ヘッダー -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm text-center">
-            <h1 class="text-2xl font-bold text-gray-800">作詞連想ツール v8.5</h1>
-            <p class="text-xs text-gray-400 mt-1">AI 接続診断モード</p>
-        </div>
-
-        <!-- 入力エリア -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4 border border-gray-100">
-            <div>
-                <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">言葉を入力</label>
-                <input type="text" id="displayInput" class="w-full p-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-400 outline-none transition-all" placeholder="例：蒼い空">
+    <!-- Header & Search (Sticky) -->
+    <header class="sticky-search px-4 py-4 shadow-xl">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-xl font-bold mb-4 flex items-center justify-between">
+                <span class="accent-text tracking-wider">RHYME STUDIO</span>
+                <span class="text-xs font-normal text-slate-400">ナルキ式・作詞連想ツール</span>
+            </h1>
+            
+            <div class="relative group">
+                <input type="text" id="searchInput" placeholder="単語・母音・音数で検索..." 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-lg focus:border-green-400 transition-all">
+                <button id="clearSearch" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-2">✕</button>
             </div>
             
-            <div class="flex space-x-2">
-                <button onclick="saveWord()" class="flex-1 bg-blue-500 text-white py-4 font-bold rounded-xl active:scale-95 transition-all shadow-md shadow-blue-100">貯金する</button>
-                <button onclick="askAI()" class="bg-purple-600 text-white px-8 py-4 font-bold rounded-xl active:scale-95 transition-all flex items-center justify-center shadow-md shadow-purple-100">
-                    <span id="aiButtonText">AI提案</span>
-                    <div id="spinner" class="hidden animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div>
-                </button>
+            <div class="flex gap-2 mt-3 overflow-x-auto pb-1 text-sm no-scrollbar">
+                <span class="text-slate-400 whitespace-nowrap pt-1">クイック絞り込み:</span>
+                <button onclick="setSearchFilter('2')" class="bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600">2音</button>
+                <button onclick="setSearchFilter('3')" class="bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600">3音</button>
+                <button onclick="setSearchFilter('4')" class="bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600">4音</button>
+                <button onclick="setSearchFilter('5')" class="bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600">5音</button>
             </div>
         </div>
+    </header>
 
-        <!-- AI 回答・診断エリア -->
-        <div class="bg-purple-50 p-5 rounded-2xl border border-purple-100 min-h-[120px] transition-all">
-            <h2 class="text-xs font-bold text-purple-400 mb-2 uppercase tracking-widest">AI Response / Diagnosis</h2>
-            <p id="aiResponse" class="text-gray-700 text-sm whitespace-pre-wrap font-medium leading-relaxed">AIボタンを押すと、ここに結果またはエラーの詳細が表示されます。</p>
-        </div>
+    <main class="max-w-3xl mx-auto px-4 mt-8">
         
-        <!-- リスト表示エリア -->
-        <div id="listSection" class="space-y-2"></div>
+        <!-- Add Word Form -->
+        <section class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 mb-8">
+            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span class="bg-accent-green w-1 h-5 inline-block"></span>
+                新規単語登録
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-xs text-slate-400 mb-1">表示名 (歌詞での表記)</label>
+                    <input type="text" id="wordDisplay" placeholder="例: 笑顔" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded p-3">
+                    <button id="clearDisplay" class="absolute right-2 bottom-3 text-slate-600 p-1">✕</button>
+                </div>
+                
+                <div class="relative">
+                    <div class="flex justify-between mb-1">
+                        <label class="block text-xs text-slate-400">読み (かな)</label>
+                        <button id="syncToggle" class="text-xs accent-text font-bold flex items-center gap-1">
+                            <span id="syncIcon">🔗</span> <span id="syncText">連動ON</span>
+                        </button>
+                    </div>
+                    <input type="text" id="wordReading" placeholder="例: えがお" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded p-3">
+                    <button id="clearReading" class="absolute right-2 bottom-3 text-slate-600 p-1">✕</button>
+                </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between bg-slate-900/50 p-3 rounded border border-dashed border-slate-700">
+                <div class="flex gap-4">
+                    <div class="text-sm">
+                        <span class="text-slate-500">母音:</span> 
+                        <span id="previewVowels" class="accent-text font-mono font-bold">-</span>
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-slate-500">音数:</span> 
+                        <span id="previewCount" class="font-bold">-</span>
+                    </div>
+                </div>
+                <button id="saveButton" class="bg-accent-green text-slate-900 font-bold px-6 py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all">
+                    保存
+                </button>
+            </div>
+        </section>
+
+        <!-- Result List -->
+        <section>
+            <div class="flex justify-between items-end mb-4 px-1">
+                <h2 class="text-sm text-slate-400">登録済み単語 <span id="wordCount">0</span>件</h2>
+                <div class="text-xs text-slate-500">文字数順に表示</div>
+            </div>
+            
+            <div id="wordList" class="space-y-2">
+                <!-- Data will be injected here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Confirm Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold mb-2">単語の削除</h3>
+            <p class="text-slate-400 text-sm mb-6">この単語をリストから削除しますか？この操作は取り消せません。</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-slate-700 py-2 rounded font-bold">キャンセル</button>
+                <button id="confirmDelete" class="flex-1 bg-accent-orange py-2 rounded font-bold">削除する</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        let words = JSON.parse(localStorage.getItem('sakushi_words') || '[]');
+        // --- State Management ---
+        let words = JSON.parse(localStorage.getItem('naruki_rhyme_data')) || [];
+        let isSynced = true;
+        let deleteId = null;
+
+        // --- Selectors ---
+        const searchInput = document.getElementById('searchInput');
+        const wordDisplay = document.getElementById('wordDisplay');
+        const wordReading = document.getElementById('wordReading');
+        const previewVowels = document.getElementById('previewVowels');
+        const previewCount = document.getElementById('previewCount');
+        const wordList = document.getElementById('wordList');
+        const saveButton = document.getElementById('saveButton');
+        const syncToggle = document.getElementById('syncToggle');
+
+        // --- Core Logic: Mother of Vowels ---
+        function extractVowels(text) {
+            if (!text) return "";
+            // カタカナをひらがなに変換
+            let kana = text.replace(/[\u30a1-\u30f6]/g, s => String.fromCharCode(s.charCodeAt(0) - 0x60));
+            
+            // 拗音・促音・長音の処理
+            // ゃゅょ、っ を直前の音とセットにしたり無視したりする前の正規化
+            const mapping = {
+                'あ': 'a', 'か': 'a', 'さ': 'a', 'た': 'a', 'な': 'a', 'は': 'a', 'ま': 'a', 'や': 'a', 'ら': 'a', 'わ': 'a', 'が': 'a', 'ざ': 'a', 'だ': 'a', 'ば': 'a', 'ぱ': 'a', 'ぁ': 'a',
+                'い': 'i', 'き': 'i', 'し': 'i', 'ち': 'i', 'に': 'i', 'ひ': 'i', 'み': 'i', 'り': 'i', 'ぎ': 'i', 'じ': 'i', 'ぢ': 'i', 'び': 'i', 'ぴ': 'i', 'ぃ': 'i',
+                'う': 'u', 'く': 'u', 'す': 'u', 'つ': 'u', 'ぬ': 'u', 'ふ': 'u', 'む': 'u', 'ゆ': 'u', 'る': 'u', 'ぐ': 'u', 'ず': 'u', 'づ': 'u', 'ぶ': 'u', 'ぷ': 'u', 'ぅ': 'u', 'ヴ': 'u',
+                'え': 'e', 'け': 'e', 'せ': 'e', 'て': 'e', 'ね': 'e', 'へ': 'e', 'め': 'e', 'れ': 'e', 'げ': 'e', 'ぜ': 'e', 'で': 'e', 'べ': 'e', 'ぺ': 'e', 'ぇ': 'e',
+                'お': 'o', 'こ': 'o', 'そ': 'o', 'と': 'o', 'の': 'o', 'ほ': 'o', 'も': 'o', 'よ': 'o', 'ろ': 'o', 'ご': 'o', 'ぞ': 'o', 'ど': 'o', 'ぼ': 'o', 'ぽ': 'o', 'ぉ': 'o',
+                'ん': 'n', 'ー': '' // 長音は音としてカウントするが母音は直前のものを引き継ぐ等あるがシンプルに母音なしとするか、直前を繰り返すか
+            };
+
+            let result = "";
+            let count = 0;
+            for (let i = 0; i < kana.length; i++) {
+                let char = kana[i];
+                // 拗音（ゃゅょ）はスキップ（前の文字の母音に含まれるため）
+                if (['ゃ', 'ゅ', 'ょ', 'ゎ'].includes(char)) continue;
+                // 促音（っ）は音数としては数えるが母音はない
+                if (char === 'っ') {
+                    count++;
+                    continue;
+                }
+                
+                let v = mapping[char];
+                if (v !== undefined) {
+                    result += v;
+                    count++;
+                } else if (char === 'ー' && result.length > 0) {
+                    // 長音は直前の母音を重ねる(作詞的に)
+                    result += result[result.length - 1];
+                    count++;
+                }
+            }
+            return { vowels: result, count: count };
+        }
+
+        // --- UI Functions ---
+        function render() {
+            const query = searchInput.value.toLowerCase();
+            const filtered = words.filter(w => {
+                return w.display.toLowerCase().includes(query) || 
+                       w.reading.includes(query) || 
+                       w.vowels.includes(query) ||
+                       w.count.toString() === query;
+            }).sort((a, b) => a.count - b.count);
+
+            document.getElementById('wordCount').textContent = words.length;
+            wordList.innerHTML = filtered.length ? '' : '<p class="text-center text-slate-600 py-10">該当する単語がありません</p>';
+            
+            filtered.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-800 p-4 rounded-lg flex justify-between items-center fade-in border border-slate-700/50 hover:border-slate-600 transition-all';
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-lg">${w.display}</span>
+                            <span class="text-xs text-slate-500">(${w.reading})</span>
+                        </div>
+                        <div class="flex gap-3 items-center">
+                            <span class="text-xs font-mono bg-slate-900 px-2 py-0.5 rounded accent-text">${w.vowels}</span>
+                            <span class="text-[10px] text-slate-400 bg-slate-700/50 px-1.5 py-0.5 rounded">${w.count}音</span>
+                        </div>
+                    </div>
+                    <button onclick="openDeleteModal('${w.id}')" class="text-slate-600 hover:text-orange-400 p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
+                `;
+                wordList.appendChild(div);
+            });
+        }
+
+        function updatePreview() {
+            const { vowels, count } = extractVowels(wordReading.value);
+            previewVowels.textContent = vowels || "-";
+            previewCount.textContent = count > 0 ? count + "音" : "-";
+        }
 
         function saveWord() {
-            const val = document.getElementById('displayInput').value.trim();
-            if (!val) return;
-            words.unshift({ display: val, yomi: val, date: new Date().getTime() });
-            localStorage.setItem('sakushi_words', JSON.stringify(words));
-            document.getElementById('displayInput').value = '';
-            renderList();
+            const display = wordDisplay.value.trim();
+            const reading = wordReading.value.trim();
+            if (!display || !reading) return;
+
+            const { vowels, count } = extractVowels(reading);
+            const newWord = {
+                id: Date.now().toString(),
+                display,
+                reading,
+                vowels,
+                count
+            };
+
+            words.push(newWord);
+            localStorage.setItem('naruki_rhyme_data', JSON.stringify(words));
+            
+            // Clear inputs
+            wordDisplay.value = "";
+            wordReading.value = "";
+            updatePreview();
+            render();
+            wordDisplay.focus();
         }
 
-        function renderList() {
-            document.getElementById('listSection').innerHTML = words.map((w, i) => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-50 flex justify-between items-center animate-in fade-in slide-in-from-bottom-2">
-                    <div class="font-bold text-gray-700 text-lg">${w.display}</div>
-                    <button onclick="deleteWord(${i})" class="text-red-200 hover:text-red-400 p-2 transition-colors text-xl">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function deleteWord(index) {
-            words.splice(index, 1);
-            localStorage.setItem('sakushi_words', JSON.stringify(words));
-            renderList();
-        }
-
-        async function askAI() {
-            const val = document.getElementById('displayInput').value.trim();
-            if (!val) {
-                alert("言葉を入力してください");
-                return;
+        // --- Event Listeners ---
+        wordDisplay.addEventListener('input', () => {
+            if (isSynced) {
+                wordReading.value = wordDisplay.value;
+                updatePreview();
             }
-            if (!apiKey || apiKey === "") {
-                alert("APIキーが設定されていません。index.htmlの13行目を確認してください。");
-                return;
+        });
+
+        wordReading.addEventListener('input', updatePreview);
+
+        saveButton.addEventListener('click', saveWord);
+
+        syncToggle.addEventListener('click', () => {
+            isSynced = !isSynced;
+            document.getElementById('syncIcon').textContent = isSynced ? '🔗' : '🔓';
+            document.getElementById('syncText').textContent = isSynced ? '連動ON' : '連動OFF';
+        });
+
+        searchInput.addEventListener('input', render);
+
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            render();
+        });
+
+        document.getElementById('clearDisplay').addEventListener('click', () => {
+            wordDisplay.value = '';
+            if(isSynced) wordReading.value = '';
+            updatePreview();
+        });
+
+        document.getElementById('clearReading').addEventListener('click', () => {
+            wordReading.value = '';
+            updatePreview();
+        });
+
+        // --- Filter Helpers ---
+        window.setSearchFilter = (val) => {
+            searchInput.value = val;
+            render();
+        };
+
+        // --- Modal ---
+        window.openDeleteModal = (id) => {
+            deleteId = id;
+            document.getElementById('modal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal').classList.add('hidden');
+            deleteId = null;
+        };
+
+        document.getElementById('confirmDelete').addEventListener('click', () => {
+            if (deleteId) {
+                words = words.filter(w => w.id !== deleteId);
+                localStorage.setItem('naruki_rhyme_data', JSON.stringify(words));
+                render();
+                closeModal();
             }
+        });
 
-            const resArea = document.getElementById('aiResponse');
-            const btnText = document.getElementById('aiButtonText');
-            const spinner = document.getElementById('spinner');
-
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
-            resArea.innerText = "Google AI Studio に接続中...";
-            resArea.classList.remove('text-red-500');
-
-            try {
-const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: `あなたはプロの作詞家です。「${val}」という言葉から連想される、エモーショナルな歌詞フレーズを5つ提案してください。` }]
-                        }]
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    resArea.classList.add('text-red-500');
-                    resArea.innerText = "【Google API エラー診断】\n\n" + 
-                                      "Code: " + data.error.code + "\n" +
-                                      "Status: " + data.error.status + "\n" +
-                                      "Message: " + data.error.message;
-                } 
-                else if (data.candidates && data.candidates[0].content) {
-                    resArea.innerText = data.candidates[0].content.parts[0].text;
-                } 
-                else {
-                    resArea.innerText = "AIからの返答が解析できませんでした。\n" + JSON.stringify(data);
-                }
-
-            } catch (e) {
-                resArea.classList.add('text-red-500');
-                resArea.innerText = "【ネットワーク接続エラー】\n" + e.message;
-            } finally {
-                btnText.classList.remove('hidden');
-                spinner.classList.add('hidden');
+        // --- Keyboard Shortcuts ---
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                syncToggle.click();
             }
-        }
+            if (e.key === 'Enter' && (document.activeElement === wordDisplay || document.activeElement === wordReading)) {
+                saveWord();
+            }
+        });
 
-        renderList();
+        // Init
+        render();
+
     </script>
 </body>
 </html>
