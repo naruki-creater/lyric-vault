@@ -3,204 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="作詞連想">
-    
-    <title>ナルキ式・作詞連想ツール v7.4</title>
+    <title>ナルキ式・作詞連想ツール v8.0</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; padding: 15px; background: #121212; color: #e0e0e0; margin: 0; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
-        .container { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #333; box-sizing: border-box; }
-        h3 { border-bottom: 2px solid #00d1b2; padding-bottom: 10px; color: #00d1b2; margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
-        
-        #storageWarning { background: #ff4757; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8em; display: none; text-align: center; }
-
-        .file-panel { background: #161b22; padding: 12px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        .file-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
-        .action-btn { 
-            appearance: none; -webkit-appearance: none;
-            background: #30363d; border: 1px solid #444; color: #c9d1d9; padding: 10px; border-radius: 8px; 
-            cursor: pointer; transition: 0.2s; font-size: 0.8em; display: flex; align-items: center; justify-content: center; gap: 5px;
+        /* 3. 視覚デザイン: ダークモードUI基調  */
+        body { 
+            font-family: sans-serif; 
+            background: #121212; 
+            color: #e0e0e0; 
+            margin: 0; 
+            padding: 15px;
+            line-height: 1.6;
         }
-        .action-btn:active { background: #444; transform: scale(0.98); }
-        .export-btn { border-color: #00d1b2; color: #00d1b2; }
+        .container { max-width: 600px; margin: 0 auto; }
         
-        .ai-panel { background: linear-gradient(145deg, #2c3e50, #000000); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #9b59b6; }
-        .ai-results { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .ai-chip { background: rgba(155, 89, 182, 0.2); border: 1px solid #9b59b6; color: #efbfff; padding: 6px 12px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
+        /* アクセントカラー: #00d1b2  */
+        h2 { color: #00d1b2; border-bottom: 2px solid #00d1b2; padding-bottom: 10px; }
 
-        .input-group { background: #252a2e; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #00d1b2; }
-        input { width: 100%; padding: 14px 12px; border-radius: 8px; border: 1px solid #444; background: #2c3e50; color: white; font-size: 16px; outline: none; box-sizing: border-box; margin: 8px 0; }
+        /* 2. 入力支援: 入力グループ  */
+        .input-group { 
+            background: #1e1e1e; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border-left: 5px solid #00d1b2;
+            margin-bottom: 20px;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-radius: 8px; 
+            border: 1px solid #444; 
+            background: #2c3e50; 
+            color: white; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
         
-        .toggle-sync-btn { width: 100%; background: #333; border: 1px solid #555; color: #888; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.85em; margin: 5px 0; display: block; text-align: center; }
-        .toggle-sync-btn.active { border-color: #00d1b2; color: #00d1b2; background: rgba(0,209,178,0.1); }
-        
-        .add-btn { width: 100%; background: #00d1b2; color: #121212; padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
-        .gemini-btn { width: 100%; background: #9b59b6; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; margin-top: 8px; }
+        .sync-btn {
+            width: 100%;
+            background: #333;
+            color: #888;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+        .sync-btn.active { color: #00d1b2; border-color: #00d1b2; }
 
-        .search-box { position: sticky; top: 0; background: #1e1e1e; padding: 15px 0; z-index: 10; border-bottom: 1px solid #333; }
-        .result-item { background: #262626; padding: 15px; margin-bottom: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #333; }
-        .vowel { color: #e17055; font-weight: bold; font-size: 1.2em; text-align: right; }
-        .delete-btn { background: none; border: 1px solid #ff4757; color: #ff4757; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8em; margin-top: 10px; }
+        /* 入力プレビュー: 母音と音数の表示  */
+        .preview-area { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.9em; 
+            margin: 10px 0;
+            padding: 0 5px;
+        }
+        .vowel-val { color: #e17055; font-weight: bold; } /* オレンジ  */
+        .count-val { color: #00d1b2; font-weight: bold; }
+
+        .add-btn { 
+            width: 100%; 
+            background: #00d1b2; 
+            color: #121212; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        /* 3. スティッキー検索バー  */
+        .search-box { 
+            position: sticky; 
+            top: 0; 
+            background: #121212; 
+            padding: 15px 0; 
+            z-index: 100;
+        }
+
+        /* 4. データ管理: リスト表示  */
+        .result-item { 
+            background: #252a2e; 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #333;
+        }
+        .word-info b { font-size: 1.2em; }
+        .word-info small { color: #aaa; display: block; }
         
-        textarea#importArea { width: 100%; height: 100px; background: #000; color: #0f0; font-family: monospace; font-size: 12px; margin-top: 10px; border-radius: 5px; padding: 10px; box-sizing: border-box; }
+        /* 音数バッジ  */
+        .badge {
+            background: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            color: #00d1b2;
+            margin-left: 5px;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #ff4757;
+            border: 1px solid #ff4757;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .file-btn {
+            flex: 1;
+            padding: 10px;
+            background: #30363d;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="storageWarning">⚠️ データの保存機能がオフになっています。Safariで開き直し、「ホーム画面に追加」を行ってください。</div>
-        
-        <h3>
-            <span>作詞連想ツール v7.4</span>
-            <span style="font-size: 0.5em; color: #888;">iPhone安定版</span>
-        </h3>
 
-        <div class="file-panel">
-            <div class="file-actions">
-                <button class="action-btn export-btn" onclick="exportToFile()">💾 保存(DL)</button>
-                <label class="action-btn">📂 読み込み<input type="file" id="importInput" style="display: none;" accept=".json" onchange="importFromFile(event)"></label>
-            </div>
-            <button class="action-btn" style="width: 100%; margin-top: 8px; font-size: 0.75em;" onclick="toggleImportArea()">📋 データを直接貼り付けて読み込む</button>
-            <div id="importAreaContainer" style="display:none;">
-                <textarea id="importArea" placeholder="ここにバックアップテキストを貼り付け"></textarea>
-                <button class="action-btn" style="width: 100%; background: #238636; color: white; margin-top: 5px;" onclick="importFromText()">インポート実行</button>
-            </div>
-        </div>
+<div class="container">
+    <h2>RHYME STUDIO v8.0</h2>
 
-        <div class="ai-panel">
-            <div style="font-size: 0.8em; color: #bbb;">✨ AI 作詞アシスタント</div>
-            <div id="aiLoading" style="display:none; text-align:center; font-size:0.8em; padding:10px;">AIが連想中...</div>
-            <div id="aiResults" class="ai-results"></div>
-        </div>
-        
-        <div class="input-group">
-            <input type="text" id="newName" placeholder="言葉（例：情熱）" autocomplete="off">
-            <button id="syncToggleBtn" class="toggle-sync-btn active" onclick="toggleSync()">🔗 表示名と読みを連動中 (Ctrl+/)</button>
-            <input type="text" id="newRuby" placeholder="読み（例：じょうねつ）" autocomplete="off">
-            
-            <div style="display:flex; justify-content: space-between; font-size: 0.9em; padding: 8px 5px;">
-                <span>母音: <span id="vowelPreview" style="color:#e17055; font-weight:bold;">-</span></span>
-                <span>文字数: <span id="lenPreview" style="color:#00d1b2;">0</span>音</span>
-            </div>
-            
-            <button class="add-btn" onclick="addWord()">端末に貯金する</button>
-            <button class="gemini-btn" onclick="askGeminiForWords()">✨ AIに関連ワードを聞く</button>
-        </div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="母音・言葉・文字数で検索" oninput="search()">
-        </div>
-        <div id="results"></div>
+    <div class="file-actions">
+        <button class="file-btn" onclick="exportData()">💾 保存(DL)</button>
+        <button class="file-btn" onclick="document.getElementById('fileIn').click()">📂 読込</button>
+        <input type="file" id="fileIn" style="display:none" onchange="importData(event)">
     </div>
 
-    <script>
-        const apiKey = ""; // 必要に応じてAPIキーを入力
-        let lyricsBank = [];
-        let isSyncing = true;
-
-        window.onload = () => {
-            checkStorage();
-            loadBank();
-            setupInputSync();
-            search();
-        };
-
-        function checkStorage() {
-            try {
-                localStorage.setItem('test', '1');
-                localStorage.removeItem('test');
-            } catch (e) {
-                document.getElementById('storageWarning').style.display = 'block';
-            }
-        }
-
-        function loadBank() {
-            const saved = localStorage.getItem('sakushi_lyrics_bank');
-            if (saved) {
-                try {
-                    lyricsBank = JSON.parse(saved);
-                } catch (e) {
-                    lyricsBank = [];
-                }
-            }
-        }
-
-        function setupInputSync() {
-            const nameInput = document.getElementById('newName');
-            const rubyInput = document.getElementById('newRuby');
-            const syncHandler = () => {
-                if (isSyncing) { rubyInput.value = nameInput.value; }
-                updatePreviews();
-            };
-            nameInput.addEventListener('input', syncHandler);
-            nameInput.addEventListener('compositionupdate', syncHandler);
-            nameInput.addEventListener('compositionend', syncHandler);
-            rubyInput.addEventListener('input', updatePreviews);
-        }
-
-        function toggleSync() {
-            isSyncing = !isSyncing;
-            const btn = document.getElementById('syncToggleBtn');
-            btn.classList.toggle('active', isSyncing);
-            btn.innerText = isSyncing ? "🔗 表示名と読みを連動中 (Ctrl+/)" : "🔓 読みを独立入力中 (Ctrl+/)";
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && (e.key === '/' || e.keyCode === 191)) {
-                e.preventDefault();
-                toggleSync();
-            }
-        });
-
-        function hiraToKata(s) { return s.replace(/[ぁ-ん]/g, m => String.fromCharCode(m.charCodeAt(0) + 0x60)); }
+    <div class="input-group">
+        <input type="text" id="newName" placeholder="表示名 (例: 情熱)" autocomplete="off">
+        <button id="syncBtn" class="sync-btn active" onclick="toggleSync()">🔗 表示名と読みを連動中</button>
+        <input type="text" id="newRuby" placeholder="読み (例: じょうねつ)" autocomplete="off">
         
-        function extractVowels(s) {
-            const k = hiraToKata(s);
-            const vt = {'ア':'ア','カ':'ア','サ':'ア','タ':'ア','ナ':'ア','ハ':'ア','マ':'ア','ヤ':'ア','ラ':'ア','ワ':'ア','ガ':'ア','ザ':'ア','ダ':'ア','バ':'ア','パ':'ア','ァ':'ア','ャ':'ア','イ':'イ','キ':'イ','シ':'イ','チ':'イ','ニ':'イ','ヒ':'イ','ミ':'イ','リ':'イ','ギ':'イ','ジ':'イ','ヂ':'イ','ビ':'イ','ピ':'イ','ィ':'イ','ウ':'ウ','ク':'ウ','ス':'ウ','ツ':'ウ','ヌ':'ウ','フ':'ウ','ム':'ウ','ユ':'ユ','ル':'ウ','グ':'ウ','ズ':'ウ','ブ':'ウ','プ':'ウ','ゥ':'ウ','ュ':'ウ','エ':'エ','ケ':'エ','セ':'エ','テ':'エ','ネ':'エ','ヘ':'エ','メ':'エ','レ':'エ','ゲ':'エ','ゼ':'エ','デ':'エ','ベ':'エ','ペ':'エ','ェ':'エ','オ':'オ','コ':'オ','ソ':'オ','ト':'オ','ノ':'オ','ホ':'オ','モ':'オ','ヨ':'オ','ロ':'オ','ヲ':'オ','ゴ':'オ','ゾ':'オ','ド':'オ','ボ':'オ','ポ':'オ','ォ':'オ','ョ':'オ','ン':'ン'};
-            let r = ""; for(let c of k) if(vt[c]) r += vt[c];
-            return Array.from(new Set(r.split(''))).join('');
-        }
+        <div class="preview-area">
+            <span>母音: <span id="vPreview" class="vowel-val">-</span></span>
+            <span>音数: <span id="cPreview" class="count-val">0</span>音</span>
+        </div>
+        
+        <button class="add-btn" onclick="addWord()">端末に貯金する</button>
+    </div>
 
-        function updatePreviews() {
-            const rb = document.getElementById('newRuby').value;
-            document.getElementById('vowelPreview').innerText = extractVowels(rb) || "-";
-            document.getElementById('lenPreview').innerText = rb.length;
-        }
+    <div class="search-box">
+        <input type="text" id="searchIn" placeholder="母音・言葉・音数で検索" oninput="runSearch()">
+    </div>
 
-        function addWord() {
-            const n = document.getElementById('newName').value.trim();
-            const r = document.getElementById('newRuby').value.trim();
-            if(!n || !r) return;
-            lyricsBank.push({ name: n, ruby: r, vowels: extractVowels(r), len: r.length });
-            saveToStorage();
-            document.getElementById('newName').value = '';
-            document.getElementById('newRuby').value = '';
-            updatePreviews();
-            search();
-        }
+    <div id="resultList"></div>
+</div>
 
-        function saveToStorage() {
+<script>
+    // 4. データ管理: ローカル保存 
+    let bank = JSON.parse(localStorage.getItem('naruki_lyrics_v8')) || [];
+    let isSyncing = true;
+
+    // 1. リアルタイム母音抽出ロジック 
+    function getVowels(str) {
+        if (!str) return "";
+        const kana = str.replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60));
+        const table = {
+            'ア':'ア','カ':'ア','サ':'ア','タ':'ア','ナ':'ア','ハ':'ア','マ':'ア','ヤ':'ア','ラ':'ア','ワ':'ア','ガ':'ア','ザ':'ア','ダ':'ア','バ':'ア','パ':'ア','ァ':'ア','ャ':'ア',
+            'イ':'イ','キ':'イ','シ':'イ','チ':'イ','ニ':'イ','ヒ':'イ','ミ':'イ','リ':'イ','ギ':'イ','ジ':'イ','ヂ':'イ','ビ':'イ','ピ':'イ','ィ':'イ',
+            'ウ':'ウ','ク':'ウ','ス':'ウ','ツ':'ウ','ヌ':'ウ','フ':'ウ','ム':'ウ','ユ':'ウ','ル':'ウ','グ':'ウ','ズ':'ウ','ブ':'ウ','プ':'ウ','ゥ':'ウ','ュ':'ウ',
+            'エ':'エ','ケ':'エ','セ':'エ','テ':'エ','ネ':'エ','ヘ':'エ','メ':'エ','レ':'エ','ゲ':'エ','ゼ':'エ','デ':'エ','ベ':'エ','ペ':'エ','ェ':'エ',
+            'オ':'オ','コ':'オ','ソ':'オ','ト':'オ','ノ':'オ','ホ':'オ','モ':'オ','ヨ':'オ','ロ':'オ','ヲ':'オ','ゴ':'オ','ゾ':'オ','ド':'オ','ボ':'オ','ポ':'オ','ォ':'オ','ョ':'オ',
+            'ン':'ン'
+        };
+        let res = "";
+        for (let char of kana) { if (table[char]) res += table[char]; }
+        return Array.from(new Set(res.split(''))).join(''); // 重複排除
+    }
+
+    // 2. 入力支援: オートシンク 
+    const nameIn = document.getElementById('newName');
+    const rubyIn = document.getElementById('newRuby');
+
+    nameIn.addEventListener('input', () => {
+        if (isSyncing) rubyIn.value = nameIn.value;
+        updateUI();
+    });
+    rubyIn.addEventListener('input', () => {
+        updateUI();
+    });
+
+    function toggleSync() {
+        isSyncing = !isSyncing;
+        const btn = document.getElementById('syncBtn');
+        btn.classList.toggle('active', isSyncing);
+        btn.innerText = isSyncing ? "🔗 表示名と読みを連動中" : "🔓 読みを独立入力中";
+    }
+
+    function updateUI() {
+        const r = rubyIn.value;
+        document.getElementById('vPreview').innerText = getVowels(r) || "-";
+        document.getElementById('cPreview').innerText = r.length;
+    }
+
+    // 4. データ管理: 追加と保存 
+    function addWord() {
+        const n = nameIn.value.trim();
+        const r = rubyIn.value.trim();
+        if (!n || !r) return;
+
+        bank.push({ name: n, ruby: r, vowels: getVowels(r), len: r.length });
+        save();
+        nameIn.value = "";
+        rubyIn.value = "";
+        updateUI();
+        runSearch();
+    }
+
+    function save() {
+        localStorage.setItem('naruki_lyrics_v8', JSON.stringify(bank));
+    }
+
+    // 1. 柔軟なスマート検索 
+    function runSearch() {
+        const q = document.getElementById('searchIn').value.toLowerCase();
+        const listEl = document.getElementById('resultList');
+        listEl.innerHTML = "";
+
+        // 文字数順ソート 
+        const filtered = bank.map((w, i) => ({...w, id: i}))
+            .filter(w => 
+                w.name.includes(q) || 
+                w.ruby.includes(q) || 
+                w.vowels.includes(q) || 
+                (q.match(/^\d+$/) && w.len == parseInt(q))
+            )
+            .sort((a, b) => a.len - b.len);
+
+        filtered.forEach(w => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+                <div class="word-info">
+                    <b>${w.name}</b><span class="badge">${w.len}音</span>
+                    <small>${w.ruby} [${w.vowels}]</small>
+                </div>
+                <button class="delete-btn" onclick="del(${w.id})">削除</button>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+
+    // 4. 削除ガード 
+    function del(idx) {
+        if (confirm("この単語を削除しますか？")) {
+            bank.splice(idx, 1);
+            save();
+            runSearch();
+        }
+    }
+
+    // ファイル管理
+    function exportData() {
+        const blob = new Blob([JSON.stringify(bank, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'lyrics_v8_backup.json';
+        a.click();
+    }
+
+    function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
             try {
-                localStorage.setItem('sakushi_lyrics_bank', JSON.stringify(lyricsBank));
-            } catch (e) {
-                alert("保存に失敗しました。");
-            }
-        }
+                bank = JSON.parse(ev.target.result);
+                save();
+                runSearch();
+                alert("読み込み完了しました");
+            } catch(err) { alert("形式が違います"); }
+        };
+        reader.readAsText(file);
+    }
 
-        function deleteWord(i) {
-            if(confirm("この言葉を貯金箱から削除しますか？")) {
-                lyricsBank.splice(i, 1);
-                saveToStorage();
-                search();
-            }
-        }
-
-        function search() {
-            const q = document.getElementById('searchInput').value;
-            const rd = document.getElementById('results');
-            rd.innerHTML = '';
-            const filtered = lyricsBank.map((w, i) => ({...w, i}))
-                .filter(w => w.name.includes(q) || w.ruby.includes(q) || w.vowels.includes(hiraToKata(q)) || (q.match(/^\d+/) && w.len == parseInt(q)));
-            filtered.sort((a,b) => a.len - b.len).forEach(w => {
-                const d = document.createElement('div'); d.className = 'result-item';
+    // 初期起動時
+    runSearch();
+</script>
+</body>
+</html>
